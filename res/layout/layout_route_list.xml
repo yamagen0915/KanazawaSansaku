@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:paddingBottom="5dp"
+    android:paddingLeft="15dp"
+    android:paddingRight="15dp"
+    android:paddingTop="5dp" >
+
+    <!--  カードUIっぽくするためにRelativelayoutでかこっている　-->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#FFF"
+        android:padding="5dp" >
+
+        <ImageView
+            android:id="@+id/imageIcon"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="10dp"
+            android:src="@drawable/thumbnail" />
+
+        <TextView
+            android:id="@+id/textRouteTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_toRightOf="@+id/imageIcon"
+            android:textColor="#000"
+            android:textSize="20sp" />
+
+        <TextView
+            android:id="@+id/textRouteDescription"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@id/textRouteTitle"
+            android:layout_below="@+id/textRouteTitle"
+            android:textColor="#000"
+            android:textSize="17sp" />
+
+        <!-- 20spというのは@id/textTimeRequiredのTextSize。これと同じ数値にする -->
+        <ImageView
+            android:layout_width="20sp"
+            android:layout_height="20sp"
+            android:layout_toLeftOf="@+id/textTimeRequired"
+            android:src="@drawable/time1" />
+
+        <TextView
+            android:id="@+id/textTimeRequired"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true"
+            android:textColor="#333"
+            android:textSize="20sp" />
+    </RelativeLayout>
+
+</RelativeLayout>
