@@ -51,12 +51,17 @@
             android:name="com.gen.kanazawasansaku.MapActivity"
             android:screenOrientation="portrait" >
         </activity>
-         <activity
-            android:name="com.gen.kanazawasansaku.RouteListActivity"
+        <activity
+            android:name="com.gen.kanazawasansaku.SpotListActivity"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:theme="@android:style/Theme.Holo.Light"
+            android:name="com.gen.kanazawasansaku.AddSpotActivity"
             android:screenOrientation="portrait" >
         </activity>
 
-        <service android:name="com.gen.kanazawasansaku.RouteLoggingService" >
+        <service android:name="com.gen.kanazawasansaku.GpsService" >
         </service>
     </application>
 

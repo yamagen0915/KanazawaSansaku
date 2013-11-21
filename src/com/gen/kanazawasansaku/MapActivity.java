@@ -1,7 +1,6 @@
 package com.gen.kanazawasansaku;
 
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -14,14 +13,11 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.EditText;
 import android.widget.ImageButton;
 
 import com.gen.kanazawasansaku.DbAccess.Route;
-import com.gen.kanazawasansaku.RegistRouteDialog.OnRegistRouteListener;
-import com.gen.kanazawasansaku.RouteLoggingService.OnLocationChangedListener;
-import com.gen.kanazawasansaku.RouteLoggingService.RouteLoggingBinder;
+import com.gen.kanazawasansaku.GpsService.GpsBinder;
+import com.gen.kanazawasansaku.GpsService.OnLocationChangedListener;
 import com.gen.kanazawasansaku.utils.Utils;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -39,7 +35,7 @@ public class MapActivity extends Activity implements OnLocationChangedListener, 
 	private static final int LINE_WIDTH = 3;
 	
 	private GoogleMap googleMap;
-	private ImageButton btnStartLog, btnEndLog;
+	private ImageButton btnStartLog;
 
 	private boolean isLogging 	 = false;
 	private List<LatLng> latlngs = new LinkedList<LatLng>();
@@ -54,21 +50,15 @@ public class MapActivity extends Activity implements OnLocationChangedListener, 
 		isLogging = params.getBooleanExtra("isLogging", false);
 		
 		btnStartLog = (ImageButton) findViewById(R.id.imageStartLog);
-		btnStartLog.setOnClickListener(onStartLogButtonClick);
 		btnStartLog.setVisibility(
 				(isLogging) ? View.INVISIBLE : View.VISIBLE);
-		
-		btnEndLog = (ImageButton) findViewById(R.id.imageEndLog);
-		btnEndLog.setOnClickListener(onEndLogButtonClick);
-		btnEndLog.setVisibility(
-				(isLogging) ? View.VISIBLE : View.INVISIBLE);
 		
 		googleMap = ((MapFragment)getFragmentManager().findFragmentById(R.id.map)).getMap();
 		googleMap.setMyLocationEnabled(true);
 		
 
 		// 位置情報をバックグラウンドで取得する。
-		bindService(new Intent(this, RouteLoggingService.class), this, Context.BIND_AUTO_CREATE);
+		bindService(new Intent(this, GpsService.class), this, Context.BIND_AUTO_CREATE);
 		
 		// ルートが選択されていればルートの一番最初の座標にカメラを動かす。
 		Route selectRoute = (Route) params.getSerializableExtra("selectRoute");
@@ -92,71 +82,6 @@ public class MapActivity extends Activity implements OnLocationChangedListener, 
 		if (!isLogging) {}
 			unbindService(this);
 	}
-	
-	private OnClickListener onStartLogButtonClick = new OnClickListener() {
-		
-		@Override
-		public void onClick(View v) {
-			isLogging = true;
-			// 開始ボタンと終了ボタンを入れ替える
-			btnStartLog.setVisibility(View.INVISIBLE);
-			btnEndLog.setVisibility(View.VISIBLE);
-		}
-		
-	};
-	
-	private OnClickListener onEndLogButtonClick = new OnClickListener() {
-		
-		@Override
-		public void onClick(View v) {
-			isLogging = false;
-			drawPolyline(latlngs);
-			
-			RegistRouteDialog dialog = new RegistRouteDialog();
-			dialog.setOnRegistRouteListener(onRegistRouteListener);
-			dialog.show(getFragmentManager(), RegistRouteDialog.TAG);
-			
-			// 開始ボタンと終了ボタンを入れ替える
-			btnStartLog.setVisibility(View.VISIBLE);
-			btnEndLog.setVisibility(View.INVISIBLE);
-		}
-	};
-	
-	private final OnRegistRouteListener onRegistRouteListener = new OnRegistRouteListener() {
-		
-		@Override
-		public void onRegist(View dialogView) {
-			EditText editTitle 		 = (EditText) dialogView.findViewById(R.id.editRouteTitle); 
-			EditText editDescription = (EditText) dialogView.findViewById(R.id.editRouteDescription); 
-			
-			String title 	   = editTitle.getText().toString();
-			String description = editDescription.getText().toString();
-			
-			Route route = new Route.Builder(title, Utils.toJsonStr(latlngs))
-				.description(description)
-				.timeRequired(Utils.calcRouteTimeRequire(latlngs))
-				.build();
-			
-			try {
-				Dao<Route, Integer> dao = DbAccess.getDaoInstance(Route.class);
-				// createの戻り値はその追加したオブジェクトのIDではないことに注意
-				dao.create(route);
-				// 直前に追加されたオブジェクトのIDを取得して設定する。
-				route.setId(dao.extractId(route));
-				
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-
-			latlngs = new ArrayList<LatLng>();
-		}
-		
-		@Override
-		public void onCancel() {
-			latlngs = new ArrayList<LatLng>();
-		};
-		
-	};
 	
 	@SuppressWarnings("unused")
 	private Route getRouteById (int id) {
@@ -212,8 +137,8 @@ public class MapActivity extends Activity implements OnLocationChangedListener, 
 	
 	@Override
 	public void onServiceConnected(ComponentName name, IBinder service) {
-		RouteLoggingBinder binder = (RouteLoggingBinder) service;
-		RouteLoggingService routeLoggingService = binder.getService();
+		GpsBinder binder = (GpsBinder) service;
+		GpsService routeLoggingService = binder.getService();
 		routeLoggingService.setOnLocationChangedListener(this);
 	}
 	

@@ -75,7 +75,6 @@ public class Utils {
 			}
 
 			double distanceM = Coords.mesureDistanceMeter(preLatLng, latlng);
-			Utils.Log.d("distance", distanceM + "m");
 			timeRequire += (int) (distanceM / walkSpeedMM);
 			preLatLng = latlng;
 		}

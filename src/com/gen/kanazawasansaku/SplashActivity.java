@@ -21,7 +21,7 @@ private static final int DELAY_TIME_MILLIS = 2 * 1000;
 
 	@Override
 	public void run () {
-		startActivity(new Intent(this, RouteListActivity.class));
+		startActivity(new Intent(this, SpotListActivity.class));
 		finish();
 	}
 
