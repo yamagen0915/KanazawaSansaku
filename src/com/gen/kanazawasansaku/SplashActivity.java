@@ -1,12 +1,12 @@
 package com.gen.kanazawasansaku;
 
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.app.FragmentActivity;
 
-public class SplashActivity extends Activity implements Runnable {
+public class SplashActivity extends FragmentActivity implements Runnable {
 	
 private static final int DELAY_TIME_MILLIS = 2 * 1000;
 	
@@ -15,7 +15,6 @@ private static final int DELAY_TIME_MILLIS = 2 * 1000;
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_splash);
 		
-		// DELAY_TIME_MILLISŒã‚É‰æ–Ê‘JˆÚ‚·‚é
 		new Handler().postDelayed(this, DELAY_TIME_MILLIS);
 	}
 

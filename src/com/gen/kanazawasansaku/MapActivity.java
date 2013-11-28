@@ -1,148 +1,130 @@
 package com.gen.kanazawasansaku;
 
-import java.sql.SQLException;
-import java.util.LinkedList;
-import java.util.List;
-
-import android.app.Activity;
-import android.content.ComponentName;
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
-import android.content.ServiceConnection;
-import android.graphics.Color;
+import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.os.IBinder;
+import android.support.v4.app.FragmentActivity;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.TextView;
 
-import com.gen.kanazawasansaku.DbAccess.Route;
-import com.gen.kanazawasansaku.GpsService.GpsBinder;
-import com.gen.kanazawasansaku.GpsService.OnLocationChangedListener;
+import com.gen.kanazawasansaku.apis.ImageDownloadTask;
+import com.gen.kanazawasansaku.apis.ImageDownloadTask.OnImageDownloadListener;
+import com.gen.kanazawasansaku.apis.KanazawaSansakuAPI;
+import com.gen.kanazawasansaku.apis.KanazawaSansakuAPI.Spot;
 import com.gen.kanazawasansaku.utils.Utils;
-import com.google.android.gms.maps.CameraUpdate;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.InfoWindowAdapter;
 import com.google.android.gms.maps.MapFragment;
-import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.PolylineOptions;
-import com.j256.ormlite.dao.Dao;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 
-public class MapActivity extends Activity implements OnLocationChangedListener, ServiceConnection {
+public class MapActivity extends FragmentActivity {
 	
-	// 自分の軌跡を描画するときのラインのパラメータ
-	private static final int LINE_COLOR = Color.BLUE;
-	private static final int LINE_WIDTH = 3;
+	public static final String PARAM_SPOT = "spot";
 	
 	private GoogleMap googleMap;
-	private ImageButton btnStartLog;
-
-	private boolean isLogging 	 = false;
-	private List<LatLng> latlngs = new LinkedList<LatLng>();
+	
+	private Spot spot;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_map);
 		
-		// 記録開始ボタンから遷移してきていればすぐに記録を開始する
-		Intent params = getIntent();
-		isLogging = params.getBooleanExtra("isLogging", false);
-		
-		btnStartLog = (ImageButton) findViewById(R.id.imageStartLog);
-		btnStartLog.setVisibility(
-				(isLogging) ? View.INVISIBLE : View.VISIBLE);
-		
 		googleMap = ((MapFragment)getFragmentManager().findFragmentById(R.id.map)).getMap();
 		googleMap.setMyLocationEnabled(true);
+		googleMap.setInfoWindowAdapter(new MyInfoWindowAdapter());
 		
-
-		// 位置情報をバックグラウンドで取得する。
-		bindService(new Intent(this, GpsService.class), this, Context.BIND_AUTO_CREATE);
+		// 記録開始ボタンから遷移してきていればすぐに記録を開始する
+		Intent params 	= getIntent();
+		spot = (Spot) params.getSerializableExtra("spot");
 		
-		// ルートが選択されていればルートの一番最初の座標にカメラを動かす。
-		Route selectRoute = (Route) params.getSerializableExtra("selectRoute");
-		if (selectRoute != null) {
-			List<LatLng> latlngs = Utils.toList(selectRoute.getRouteJson());
-			drawPolyline(latlngs);
-			moveToCamera(latlngs.get(0), 17, true);
-		}
+		final ProgressDialog dialog = makeProgressDialog();
+		dialog.show();
 		
-		// 航空写真で表示する
-//		googleMap.setMapType(GoogleMap.MAP_TYPE_SATELLITE);
+		new ImageDownloadTask()
+			.setOnImageDownloadListener(new OnImageDownloadListener() {
+				
+				@Override
+				public void onDownload(Bitmap bitmap) {
+					spot.setPicture(bitmap);
+					addMarker(spot.getLatLng(), googleMap);
+					dialog.dismiss();
+				}
+			})
+			.execute(KanazawaSansakuAPI.getImagePath(spot.getId()));
 		
-		
+		// スポットの位置にカメラを動かす。
+		Utils.moveToCamera(googleMap, spot.getLatLng(), 18, false);
 	}
 	
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-		
-		// 記録中でなければサービスを終了
-		if (!isLogging) {}
-			unbindService(this);
+	private static void addMarker (LatLng latlng, GoogleMap map) {
+		MarkerOptions options = new MarkerOptions();
+		options.position(latlng);
+		map.addMarker(options);
 	}
 	
 	@SuppressWarnings("unused")
-	private Route getRouteById (int id) {
+	private static void addMarker (String title,Bitmap icon, LatLng latlng, GoogleMap map) {
+		MarkerOptions options = new MarkerOptions();
+		options.position(latlng);
+		options.title(title);
+		if (icon != null)
+			options.icon(BitmapDescriptorFactory.fromBitmap(icon));
+		map.addMarker(options);
+	}
+	
+	private ProgressDialog makeProgressDialog () {
+		final ProgressDialog dialog = new ProgressDialog(this);
+		dialog.setTitle("ダウンロード中");
+		dialog.setCancelable(false);
+		dialog.setMessage("少々お待ちください");
+		dialog.setButton(ProgressDialog.BUTTON_POSITIVE, "キャンセル", new OnClickListener() {
+			
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				finish();
+			}
+		});
+		return dialog;
+	}
+	
+	private class MyInfoWindowAdapter implements InfoWindowAdapter {
 		
-		Dao<Route, Integer> dao = DbAccess.getDaoInstance(Route.class);
-		try {
-			return dao.queryForId(Integer.valueOf(id));
-		} catch (SQLException e) {
-			e.printStackTrace();
+		private View infoWindow;
+		
+		public MyInfoWindowAdapter () {
+			infoWindow = ((LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE))
+					.inflate(R.layout.layout_info_window, null);
+		}
+
+		@Override
+		public View getInfoContents(Marker marker) {
+			return null;
+		}
+
+		@Override
+		public View getInfoWindow(Marker marker) {
+			ImageView imagePicture = (ImageView) infoWindow.findViewById(R.id.imageInfoWindowPicture);
+			imagePicture.setImageBitmap(spot.getPicture());
+			
+			TextView textTitle = (TextView) infoWindow.findViewById(R.id.textInfoWindowTitle);
+			textTitle.setText(spot.getTitle());
+			
+			TextView textDescription = (TextView) infoWindow.findViewById(R.id.textInfoWindowDescription);
+			textDescription.setText(spot.getDescription());
+			
+			return infoWindow;
 		}
 		
-		return null;
 	}
-	
-	private void drawPolyline (List<LatLng> latlngs) {
-		PolylineOptions options = new PolylineOptions();
-		options.color(LINE_COLOR);
-		options.width(LINE_WIDTH);
-		
-		for (LatLng latlng : latlngs) {
-			options.add(latlng);
-		}
-		
-		googleMap.addPolyline(options);
-	}
-	
-	@Override
-	public void onLocationChangedListener(LatLng nowLatLng) {
-		Utils.Log.d("onLocationChanged");
-		
-		//Toast.makeText(this, "latlng : " + nowLatLng, Toast.LENGTH_SHORT).show();
-		
-		//  記録中のみ現在地にカメラを動かす。
-		if (isLogging) {
-			latlngs.add(nowLatLng);
-			moveToCamera(nowLatLng, 18, true);
-		}
-		
-	}
-	
-	private void moveToCamera (LatLng latlng, int zoom, boolean isAnimation) {
-		CameraPosition cameraPosition = new CameraPosition(
-				/* position = */ latlng,
-				/* zoom		= */ zoom,
-				/* tilt		= */ 10,
-				/* bearring = */ 0);
-		
-		CameraUpdate update = CameraUpdateFactory.newCameraPosition(cameraPosition);
-		if (isAnimation) googleMap.animateCamera(update);
-		else 			 googleMap.moveCamera(update);
-		
-	}
-	
-	@Override
-	public void onServiceConnected(ComponentName name, IBinder service) {
-		GpsBinder binder = (GpsBinder) service;
-		GpsService routeLoggingService = binder.getService();
-		routeLoggingService.setOnLocationChangedListener(this);
-	}
-	
-	@Override
-	public void onServiceDisconnected(ComponentName name) {}
 	
 }

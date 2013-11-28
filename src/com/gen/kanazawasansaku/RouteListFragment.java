@@ -64,7 +64,6 @@ public class RouteListFragment extends ListFragment {
 					/* context = */ getActivity(),
 					/* routes  = */ getRecomendRoute(getActivity())));
 		}
-		
 	}
 	
 	@Override
@@ -123,7 +122,6 @@ public class RouteListFragment extends ListFragment {
 		return routes;
 	}
 	
-	
 	public void setOnSelectRouteListener (OnSelectRouteListener listener) {
 		this.onSelectRouteListener = listener;
 	}
@@ -151,16 +149,16 @@ public class RouteListFragment extends ListFragment {
 		public View getView(int position, View convertView, ViewGroup parent) {
 			
 			if (convertView == null) 
-				convertView = inflater.inflate(R.layout.layout_route_list, null);
+				convertView = inflater.inflate(R.layout.layout_sopt_list, null);
 			
 			Route item = getItem(position);
 			
-			TextView textRouteTitle 	  = (TextView) convertView.findViewById(R.id.textRouteTitle);
-			TextView textRouteDescription = (TextView) convertView.findViewById(R.id.textRouteDescription);
-			TextView textTimeRequired 	  = (TextView) convertView.findViewById(R.id.textTimeRequired);
+			TextView textTitle 	  		= (TextView) convertView.findViewById(R.id.textSpotListTitle);
+			TextView textDescription 	= (TextView) convertView.findViewById(R.id.textSpotListDescription);
+			TextView textTimeRequired 	= (TextView) convertView.findViewById(R.id.textTimeRequired);
 			
-			textRouteTitle.setText(item.getTitle());
-			textRouteDescription.setText(item.getDescription());
+			textTitle.setText(item.getTitle());
+			textDescription.setText(item.getDescription());
 			textTimeRequired.setText(item.getTimerequired() + "•ª");
 			
 			ImageView imageIcon = (ImageView) convertView.findViewById(R.id.imageIcon);
@@ -170,6 +168,5 @@ public class RouteListFragment extends ListFragment {
 			
 			return convertView;
 		}
-		
 	}
 }

@@ -19,7 +19,6 @@ public class DisplayUtils {
 		
 		Point displayPoint = new Point();
 		display.getSize(displayPoint);
-		
 		displayW = displayPoint.x;
 		return displayW;
 	}
@@ -32,7 +31,6 @@ public class DisplayUtils {
 		
 		Point displayPoint = new Point();
 		display.getSize(displayPoint);
-		
 		displayH = displayPoint.y;
 		return displayH;
 	}

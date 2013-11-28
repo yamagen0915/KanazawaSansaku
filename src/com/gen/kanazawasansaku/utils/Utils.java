@@ -9,6 +9,10 @@ import org.json.JSONObject;
 
 import android.graphics.Bitmap;
 
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 
 public class Utils {
@@ -17,6 +21,18 @@ public class Utils {
 	
 	public static final String TAG 		= "kanazawasansaku";
 	public static final boolean isDebug = true;
+	
+	public static void moveToCamera (GoogleMap googleMap, LatLng latlng, int zoom, boolean isAnimation) {
+		CameraPosition cameraPosition = new CameraPosition(
+				/* position = */ latlng,
+				/* zoom		= */ zoom,
+				/* tilt		= */ 10,
+				/* bearring = */ 0);
+		
+		CameraUpdate update = CameraUpdateFactory.newCameraPosition(cameraPosition);
+		if (isAnimation) googleMap.animateCamera(update);
+		else 			 googleMap.moveCamera(update);
+	}
 	
 	public static String toJsonStr (List<LatLng> latlngs) {
 		

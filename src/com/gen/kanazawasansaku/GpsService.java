@@ -66,9 +66,10 @@ private final IBinder binder = new GpsBinder();
 	 *
 	 */
 	class GpsBinder extends Binder {
-		 GpsService getService () {
-			 return GpsService.this;
-		 }
+		
+		GpsService getService () {
+			return GpsService.this;
+		}
 	}
 	
 	public interface OnLocationChangedListener {
